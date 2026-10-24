@@ -1,11 +1,11 @@
-local _constant = require(script.modules.constants)
-local _config_ui = require(script.modules.settings_ui)
+local Constant = require(script.Parent.modules.constants)
+local imGui = require(script.Parent.modules.debug_gui)
 
-local workspace = game:GetService("Workspace")
-local RS = game:GetService("RunService")
+local workspaceService = game:GetService("Workspace")
+local runService = game:GetService("RunService")
 
-local function onStart()
-	local settings = table.clone(_constant)
+local function startClouds()
+	local settings = table.clone(Constant)
 	local seed = os.time()
 	local rng = Random.new(seed)
 	local puffPool = {}
@@ -14,7 +14,6 @@ local function onStart()
 	local moveParts = {}
 	local moveCFrames = {}
 	local nextCloudId = 0
-	local ui
 
 	local cloudsFolder = workspaceService:FindFirstChild(settings.CLOUD_FOLDER_NAME)
 	if not cloudsFolder then
@@ -154,8 +153,7 @@ local function onStart()
 
 		local cloudsPerLevel = settings.CLOUD_CLUSTERS_PER_LEVEL * settings.CLOUD_PER_CLUSTER
 		local neededPuffs = #settings.CLOUD_LEVELS * cloudsPerLevel * settings.CLOUD_PUFF_COUNT_MAX
-		
-    if neededPuffs > settings.POOL_MAX then
+		if neededPuffs > settings.POOL_MAX then
 			warn(
 				("POOL_MAX (%d) is smaller than the max puffs that could be requested (%d) — some clouds may render incomplete.")
 					:format(settings.POOL_MAX, neededPuffs)
@@ -164,24 +162,19 @@ local function onStart()
 
 		local space = settings.CLOUD_SPACE_SIZE
 		local radius = settings.CLOUD_CLUSTER_RADIUS
-		
-    for _, levelY in ipairs(settings.CLOUD_LEVELS) do
+		for _, levelY in ipairs(settings.CLOUD_LEVELS) do
 			for _ = 1, settings.CLOUD_CLUSTERS_PER_LEVEL do
-        local centerX = rng:NextNumber(-space, space)
+				local centerX = rng:NextNumber(-space, space)
 				local centerZ = rng:NextNumber(-space, space)
-				
-        for _ = 1, settings.CLOUD_PER_CLUSTER do
-          local x = centerX
+				for _ = 1, settings.CLOUD_PER_CLUSTER do
+					local x = centerX
 					local z = centerZ
-				
-          for _ = 1, 10 do
+					for _ = 1, 10 do
 						local angle = rng:NextNumber(0, 2 * math.pi)
 						local dist = radius * math.sqrt(rng:NextNumber())
-						
-            x = math.clamp(centerX + math.cos(angle) * dist, -space, space)
+						x = math.clamp(centerX + math.cos(angle) * dist, -space, space)
 						z = math.clamp(centerZ + math.sin(angle) * dist, -space, space)
-						
-            local density = fbm3d(
+						local density = fbm3d(
 							x,
 							0,
 							z,
@@ -190,14 +183,11 @@ local function onStart()
 							settings.NOISE_LACUNARITY,
 							settings.CLUSTER_NOISE_SCALE
 						)
-						
-            if density >= settings.CLUSTER_THRESHOLD then
+						if density >= settings.CLUSTER_THRESHOLD then
 							break
 						end
-
 					end
-					
-          local origin = Vector3.new(x, levelY + rng:NextNumber(-5, 5), z)
+					local origin = Vector3.new(x, levelY + rng:NextNumber(-5, 5), z)
 					table.insert(clouds, generateCloud(origin))
 				end
 			end
@@ -214,14 +204,11 @@ local function onStart()
 	local function updateClouds(dt)
 		local areaSize = settings.CLOUD_SPACE_SIZE
 		local diameter = areaSize * 2
-		
-    local now = os.clock()
+		local now = os.clock()
 		local angle = math.rad(settings.CLOUD_DIRECTION_ANGLE)
-		
-    local direction = Vector3.new(math.sin(angle), 0, -math.cos(angle))
+		local direction = Vector3.new(math.sin(angle), 0, -math.cos(angle))
 		local index = 0
-		
-    for _, cloud in ipairs(clouds) do
+		for _, cloud in ipairs(clouds) do
 			local newOrigin = cloud.origin + direction * settings.CLOUD_DRIFT_SPEED * dt
 
 			if newOrigin.X < -areaSize then
@@ -239,8 +226,7 @@ local function onStart()
 
 			local floatY = math.sin(now * settings.CLOUD_FLOAT_SPEED + cloud.floatOffset) * settings.CLOUD_FLOAT_AMPLITUDE
 			local verticalOffset = Vector3.new(0, floatY, 0)
-			
-      for _, puffData in ipairs(cloud.puffs) do
+			for _, puffData in ipairs(cloud.puffs) do
 				index += 1
 				moveCFrames[index] = CFrame.new(newOrigin + puffData.localOffset + verticalOffset)
 			end
@@ -251,14 +237,10 @@ local function onStart()
 	generateAllClouds()
 	runService.Heartbeat:Connect(updateClouds)
 
-	ui = _config_ui.create({
+	imGui.create({
 		settings = settings,
-		sliders = _constant.UI_SLIDERS,
-		theme = _constant.UI_THEME,
-		width = _constant.UI_WIDTH,
-		height = constants_.UI_HEIGHT,
-		
-    onChange = function(def, value, committed)
+		sliders = Constant.UI_SLIDERS,
+		onChange = function(def, value, committed)
 			settings[def.key] = value
 			if def.key == "CLOUD_TRANSPARENCY" then
 				applyTransparency()
@@ -267,21 +249,19 @@ local function onStart()
 				generateAllClouds()
 			end
 		end,
-		
-    onRegenerate = function()
+		onRegenerate = function()
 			seed = Random.new():NextInteger(1, 1000000)
 			rng = Random.new(seed)
 			generateAllClouds()
 		end,
-		
-    onReset = function()
-			for _, def in ipairs(_constant.UI_SLIDERS) do
-				settings[def.key] = _constant[def.key]
+		onReset = function()
+			for _, def in ipairs(Constant.UI_SLIDERS) do
+				settings[def.key] = Constant[def.key]
 			end
 			applyTransparency()
 			generateAllClouds()
-			ui.refresh()
 		end,
 	})
 end
 
+startClouds()

@@ -32,17 +32,8 @@ return {
 	NOISE_LACUNARITY = 2.0,
 	NOISE_SCALE = 0.01,
 
-	UI_WIDTH = 300,
-	UI_HEIGHT = 470,
-	UI_THEME = {
-		panel = Color3.fromRGB(24, 26, 32),
-		text = Color3.fromRGB(235, 238, 245),
-		track = Color3.fromRGB(58, 62, 74),
-		accent = Color3.fromRGB(90, 160, 255),
-		button = Color3.fromRGB(44, 48, 60),
-	},
 	UI_SLIDERS = {
-		{ key = "CLOUD_DRIFT_SPEED",label = "Drift Speed", min = 0, max = 60, step = 1, live = true },
+		{ key = "CLOUD_DRIFT_SPEED", label = "Drift Speed", min = 0, max = 60, step = 1, live = true },
 		{ key = "CLOUD_DIRECTION_ANGLE", label = "Drift Direction", min = 0, max = 360, step = 5, live = true },
 		{ key = "CLOUD_FLOAT_AMPLITUDE", label = "Float Amplitude", min = 0, max = 20, step = 0.5, live = true },
 		{ key = "CLOUD_FLOAT_SPEED", label = "Float Speed", min = 0, max = 3, step = 0.05, live = true },
