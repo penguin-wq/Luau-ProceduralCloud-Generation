@@ -1,0 +1,12 @@
+# Project place file
+/Luau-ProceduralCloud-Generation.rbxlx
+
+# Roblox Studio lock files
+/*.rbxlx.lock
+/*.rbxl.lock
+
+# Editors
+.vscode/
+.vim/
+
+sourcemap.json
