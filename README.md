@@ -1,34 +1,22 @@
 # Luau Procedural Cloud Generation
 
-A single-script Roblox cloud system. It generates layers of drifting, bobbing clouds out of anchored parts, recycling them through an object pool, and keeps them moving every frame on `Heartbeat`. Cloud shapes, sizes, and positions are randomized per run, with fractal noise varying how big and how spread out each cloud's puffs are.
-
-## Features
-
-- **Layered sky.** Clouds spawn at five fixed altitudes, so the sky has real depth instead of one flat ceiling.
-- **Puff-based clouds.** Each cloud is a cluster of 14 to 17 flat, blocky parts ("puffs") built from three size templates.
-- **Noise-driven variation.** Fractal Brownian motion (`math.noise`, four octaves) scales each puff's size and pushes its position, so neighboring clouds look different from each other.
-- **Continuous drift.** Every cloud moves along `-Z` and wraps around to the opposite edge when it leaves the sky area, so the sky never empties.
-- **Gentle floating.** Each cloud bobs on a sine wave with its own random phase, so they don't rise and fall in sync.
-- **Part pooling.** Puff parts come from a reusable pool with a hard cap, so regenerating the sky doesn't create and destroy thousands of instances.
-- **Cheap parts.** Puffs are anchored, non-colliding, and don't cast shadows.
-
-## File
-
-| File          | Purpose                                         |
-| ------------- | ----------------------------------------------- |
-| `Script.luau` | The entire system: noise, pooling, generation, update loop |
+A single-script, client-side Roblox cloud system. It generates layers of drifting, bobbing clouds out of anchored parts, recycling them through an object pool, and keeps them moving every frame on `Heartbeat`. Cloud shapes, sizes, and positions are randomized per run, with fractal noise varying how big and how spread out each cloud's puffs are.
 
 ## Setup
 
-1. Create a `Script` and paste in the contents of `Script.luau`.
-2. Place it in `ServerScriptService`.
-3. Press Play. Clouds appear in a folder named `CloudsFolder` in `Workspace`.
+1. Create a `LocalScript` and paste in the contents of `Client.luau`.
+2. Place it in `StarterPlayer > StarterPlayerScripts`.
+3. Press Play. Clouds appear in a folder named `CloudsFolder` in the client's `Workspace`.
 
-The script generates the sky once on startup and then updates it every frame. There is no module to require and nothing to call.
+### Client-Side Only
 
-### Client or Server
+This script is designed to run as a `LocalScript`. Do not run it as a server `Script`: moving a few thousand anchored parts every frame would replicate constantly to every player.
 
-The script works as a server `Script`. Moving a few thousand anchored parts every frame means a lot of property replication, though. For large cloud counts, paste it into a `LocalScript` in `StarterPlayerScripts` instead. Each player then simulates their own sky locally, at the cost of clouds not matching between players.
+Because everything is created locally:
+
+- Each player simulates their own sky, and the server and other players never see it.
+- The clouds do not match between players unless `SEED` is set to a fixed number. With a fixed seed, every client builds the same layout.
+- `CloudsFolder` only exists in the client's view of `Workspace`, so server scripts cannot find it.
 
 ## How It Works
 
@@ -119,7 +107,7 @@ With the defaults, the sky holds 150 clouds and between 2,100 and 2,550 puff par
 
 ## Usage Tips
 
-- **Reproducible skies.** `SEED` defaults to `tick()`, so every run looks different. Set it to a fixed number for the same layout every time:
+- **Reproducible skies.** `SEED` defaults to `tick()`, so every run and every player gets a different layout. Set it to a fixed number for the same layout every time, including across clients:
 
 ```lua
 local SEED = 12345
@@ -134,6 +122,7 @@ local SEED = 12345
 
 - **Axis-aligned boxes.** Puffs are never rotated, so clouds read as stacked slabs rather than rounded shapes.
 - **Edge wrap-around.** A cloud's whole origin teleports when it crosses the boundary, so a cloud near the edge of the sky area can visibly pop if a player can see that far.
-- **Per-frame cost.** Every puff is repositioned every frame, so cost scales directly with cloud and puff counts.
+- **Per-frame cost.** Every puff is repositioned every frame on the client, so cost scales directly with cloud and puff counts.
+- **Not shared.** Clouds are not replicated, so players see different skies unless `SEED` is fixed.
 - **Uniform drift.** All clouds share one direction and speed.
 - **Heartbeat connection.** The `Heartbeat` connection is never stored or disconnected, so the loop runs for the life of the script.
